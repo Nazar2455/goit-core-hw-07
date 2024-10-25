@@ -1,5 +1,6 @@
 from collections import UserDict
 from datetime import datetime, timedelta
+import re
 
 class Record:
     def __init__(self, name):
@@ -23,11 +24,11 @@ class Name(Field):
 
 class Birthday(Field):
     def __init__(self, value):
-        try:
-            date_obj = datetime.strptime(value, "%d.%m.%Y")
-            self.value = date_obj
-        except ValueError:
+        date_pattern = r"^\d{2}\.\d{2}\.\d{4}$"
+        
+        if not re.match(date_pattern, value):
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
+        self.value = value
 
 class Phone(Field):
     def __init__(self, value):
@@ -84,8 +85,10 @@ class Record:
         return None
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
-    
+        phones = '; '.join(p.value for p in self.phones) if self.phones else "No phones"
+        birthday = self.birthday.value if self.birthday else "No birthday"
+        return f"Contact name: {self.name.value}, Phones: {phones}, Birthday: {birthday}"
+
     def add_birthday(self, birthday):
         self.birthday = Birthday(birthday)
 
@@ -135,7 +138,8 @@ class AddressBook(UserDict):
         result = []
         for record in self.data.values():
             phones = ', '.join(phone.value for phone in record.phones) if record.phones else "No phones"
-            result.append(f"Name: {record.name.value}, Phones: {phones}")
+            birthdays = record.birthday.value if record.birthday else "No birthday"
+            result.append(f"Name: {record.name.value}, Phones: {phones}, Birthday: {birthdays}")
         
         return "\n".join(result)
 
@@ -202,7 +206,7 @@ def show_birthday(args, book):
     record = book.find(name)
     if not record:
         return f"Contact {name} not found"
-    return record.birthday.date()
+    return record.birthday
 
 @input_error
 def birthdays(book: AddressBook):
