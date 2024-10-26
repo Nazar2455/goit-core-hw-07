@@ -25,10 +25,30 @@ class Name(Field):
 class Birthday(Field):
     def __init__(self, value):
         date_pattern = r"^\d{2}\.\d{2}\.\d{4}$"
-        
+
         if not re.match(date_pattern, value):
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
-        self.value = value
+
+        try:
+            date_object = datetime.strptime(value, "%d.%m.%Y")
+
+            if not (1 <= date_object.month <= 12):
+                raise ValueError("Invalid month. Month must be between 1 and 12.")
+            
+            current_year = datetime.now().year
+
+            if date_object.year > current_year or date_object.year <= 0:
+                raise ValueError(f"Invalid year. Year must be between 1 and {current_year}.")
+
+            if date_object.year >= 2025:
+                raise ValueError("Year cannot be 2025 or more.")
+
+            if date_object > datetime.now():
+                raise ValueError("Birthday cannot be in the future.")
+            
+            self.value = value
+        except ValueError:
+            raise ValueError("Invalid date. Make sure the date is real.")
 
 class Phone(Field):
     def __init__(self, value):
